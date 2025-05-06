@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export let BACKEND_URL = "https://backend.g-pay.in";
+export let BACKEND_URL = "https://backend.gpay.one";
 
 
 export const fn_getBanksByTabApi = async (tab) => {
