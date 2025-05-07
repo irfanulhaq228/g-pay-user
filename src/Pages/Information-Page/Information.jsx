@@ -2,12 +2,12 @@ import axios from "axios";
 import Layout from "../../Layout/Layout";
 import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
-
 import { FaUser } from "react-icons/fa";
 import { BACKEND_URL } from "../../api/api";
 import { AiOutlineGlobal } from "react-icons/ai";
 import frontImage from "../../assets/frontPage.gif";
 import { FaIndianRupeeSign } from "react-icons/fa6";
+import block from "../../assets/block.png";
 
 const Information = ({ savedUsername, savedSite, savedAmount }) => {
 
@@ -16,6 +16,7 @@ const Information = ({ savedUsername, savedSite, savedAmount }) => {
   const [website, setWebsite] = useState("");
   const [username, setUsername] = useState("");
   const [websiteList, setWebsiteList] = useState([]);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   const [websiteLogo, setWebsiteLogo] = useState("");
 
@@ -24,6 +25,11 @@ const Information = ({ savedUsername, savedSite, savedAmount }) => {
     if (response?.data?.status === "ok") {
       setWebsiteLogo(response?.data?.data?.image);
       localStorage.setItem("phone", response?.data?.data?.phone);
+      
+      if (response?.data?.data?.block === true) {
+        setIsBlocked(true);
+        return;
+      }
     }
   };
 
@@ -55,6 +61,29 @@ const Information = ({ savedUsername, savedSite, savedAmount }) => {
     navigate(`/payment?username=${username}&amount=${amount}&type=direct&site=${website}`);
     // window.location.href = /payment?username=${username}&amount=${amount}&type=direct&site=${website};
   };
+
+  if (isBlocked) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-4xl p-5 text-center rounded-lg">
+          <div className="flex justify-center mb-2">
+            <div className="w-96 h-96 md:w-[500px] md:h-[500px] flex items-center justify-center">
+              <img src={block} alt="Block" className="w-full h-full object-contain" />
+            </div>
+          </div>
+          <h1 className="text-[43px] font-[700] text-blue-800 mb-4 flex items-center justify-center gap-3">
+            <div className="relative w-9 h-9 mt-1">
+              <div className="absolute inset-0 border-4 border-red-600 rounded-full"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-10 h-0.5 bg-red-600 transform rotate-45"></div>
+              </div>
+            </div>
+            Merchant is Blocked
+          </h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Layout>

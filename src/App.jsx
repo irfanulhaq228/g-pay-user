@@ -8,6 +8,7 @@ import PaymentCancel from "./Pages/Payment-Cancel/PaymentCancel";
 import WaitingforUPIApproval from "./Pages/Waiting-for-UPI-Approval/WaitingforUPIApproval";
 import Information from "./Pages/Information-Page/Information";
 import RefreshPage from "./Pages/Refresh-Page/RefreshPage";
+// import Block from "./Pages/Block-Page/block";
 
 function App() {
   const [transactionId, setTransactionId] = useState("");
@@ -37,6 +38,7 @@ function App() {
           element={<WaitingforUPIApproval />}
         />
         <Route path="/refresh-page" element={<RefreshPage />} />
+        {/* <Route path="/block" element={<Block />} /> */}
       </Routes>
     </>
   );
