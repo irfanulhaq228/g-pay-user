@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Modal } from "antd";
+import QRCode from "react-qr-code";
 // import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
 // const socket = io(`${BACKEND_URL}/payment`);
@@ -29,6 +30,8 @@ function UPIMethod({ setTransactionId, selectedUPIMethod = "viaQR", bank, amount
   const [selectedImage, setSelectedImage] = useState(null);
   const [isDuplicateModal, setIsDuplicateModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const qrCodeURL = `upi://pay?pa=${bank?.iban}&pn=${username}&am=${total}&cu=INR`;
 
   const fn_selectImage = async (e) => {
 
@@ -163,10 +166,16 @@ function UPIMethod({ setTransactionId, selectedUPIMethod = "viaQR", bank, amount
                   </p>
                   <div className="flex sm:flex-row flex-col gap-[30px] items-center sm:items-center w-full">
                     <div className="flex flex-col items-center sm:items-start w-full sm:w-auto">
-                      <img
+                      {/* <img
                         src={`${BACKEND_URL}/${bank?.image}`}
                         alt="QR Code"
                         className="w-full sm:w-[150px]"
+                      /> */}
+                      <QRCode
+                        size={256}
+                        style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                        value={qrCodeURL}
+                        viewBox={`0 0 256 256`}
                       />
                     </div>
                     <div className="mb-2 sm:mb-4 text-center sm:text-left">
