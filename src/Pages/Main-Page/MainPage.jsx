@@ -359,7 +359,7 @@ function MainPage({ setTransactionId }) {
             {/* <p className="font-bold text-[19px]">{item?.cryptoName}</p> */}
             <p className="font-bold text-[19px]">Crypto
              <span className="text-[13px] font-[500] ml-2 mt-[1px]">
-             ({item?.iban})
+             ({item?.iban?.slice(0, 5)}...{item?.iban?.slice(-5)})
             </span>
             </p>
           </div>
