@@ -16,6 +16,9 @@ import cancel from "../../assets/cancel.gif";
 import attention from "../../assets/attention.gif";
 import cloudupload from "../../assets/cloudupload.svg";
 import AnimationTickmarck from "../../assets/AnimationTickmarck.gif";
+import ReceiptModal from '../ReceiptModal/ReceiptModal';
+import SuccessModal from '../SuccessModal/SuccessModal';
+import DuplicateTransactionModal from '../DuplicateTransactionModal/DuplicateTransactionModal';
 
 
 function UPIMethod({ setTransactionId, selectedUPIMethod = "viaQR", bank, amount, tax, total, username, type, site }) {
@@ -30,6 +33,8 @@ function UPIMethod({ setTransactionId, selectedUPIMethod = "viaQR", bank, amount
   const [selectedImage, setSelectedImage] = useState(null);
   const [isDuplicateModal, setIsDuplicateModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptData, setReceiptData] = useState({});
 
   const qrCodeURL = `upi://pay?pa=${bank?.iban}&pn=${username}&am=${total}&cu=INR`;
 
@@ -93,14 +98,19 @@ function UPIMethod({ setTransactionId, selectedUPIMethod = "viaQR", bank, amount
               phone: localStorage.getItem("phone"),
             });
             setShowSuccessModal(true);
+            // Set receipt data and show receipt modal after success
+            setReceiptData({
+              transactionId: response?.data?.data?.trnNo,
+              amount: amount,
+              username: username,
+              site: site,
+              utr: utr,
+              upiId: bank?.iban,
+              date: new Date().toLocaleString()
+            });
             setTimeout(() => {
               setShowSuccessModal(false);
-              const whatsappUrl = `https://api.whatsapp.com/send?phone=${localStorage.getItem(
-                "phone"
-              )}&text=${encodeURIComponent(
-                `*New Payment Request Received*\n\n*Username:* ${username}\n*Transaction ID:* ${response?.data?.data?.trnNo}\n*Website:* ${site}\n*Amount:* ${amount}\n*UTR:* ${utr}`
-              )}`;
-              window.location.href = whatsappUrl;
+              setShowReceiptModal(true);
             }, 2000);
           } else {
             // For non-direct payments, redirect immediately without modal
@@ -132,6 +142,13 @@ function UPIMethod({ setTransactionId, selectedUPIMethod = "viaQR", bank, amount
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleWhatsAppRedirect = () => {
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${localStorage.getItem("phone")}&text=${encodeURIComponent(
+      `*New Payment Request Received*\n\n*Username:* ${username}\n*Transaction ID:* ${receiptData.transactionId}\n*Website:* ${site}\n*Amount:* ${amount}\n*UTR:* ${utr}`
+    )}`;
+    window.location.href = whatsappUrl;
   };
 
   useEffect(() => {
@@ -370,67 +387,25 @@ function UPIMethod({ setTransactionId, selectedUPIMethod = "viaQR", bank, amount
 
       </div>
       {/* Success Modal */}
-      <Modal
-        title="Payment Successful"
-        open={showSuccessModal}
-        footer={null}
-        closable={false}
-        maskClosable={false}
-        centered
-      >
-        <div className="py-4 flex flex-col items-center">
-          <div className="flex justify-center mb-4">
-            <img
-              src={AnimationTickmarck}
-              alt="Success"
-              className="w-24 h-24 object-contain"
-            />
-          </div>
-          <h2 className="text-xl font-bold text-green-600 mb-2">
-            Payment Submitted Successfully!
-          </h2>
-          <p className="text-gray-600 mb-2">
-            Transaction ID: {successData.transactionId}
-          </p>
-          <p className="text-gray-500 text-center">
-            {type === "direct"
-              ? "Redirecting to WhatsApp..."
-              : "Redirecting..."}
-          </p>
-        </div>
-      </Modal>
-      {/* Duplicate Transaction */}
-      <Modal
-        title="Duplicate Transaction"
-        open={isDuplicateModal}
-        onOk={() => setIsDuplicateModal(false)}
-        onCancel={() => setIsDuplicateModal(false)}
-        centered
-      >
-        <div className="py-4 flex flex-col items-center">
-          {/* Cancel Animation */}
-          <div className="flex justify-center mb-6">
-            <div className="bg-red-500 rounded-full p-2">
-              <img
-                src={cancel}
-                alt="Cancel Icon"
-                className="w-24 sm:w-28 h-24 sm:h-28 object-contain"
-              />
-            </div>
-          </div>
+      <SuccessModal
+        isOpen={showSuccessModal}
+        transactionId={successData.transactionId}
+      />
 
-          {/* Error Message */}
-          <p className="text-xl font-bold text-gray-800 mb-4">
-            OOPS! Duplicate UTR
-          </p>
-          <p className="text-red-500 font-medium text-center">
-            This UTR number has already been used!
-          </p>
-          <p className="mt-2 text-gray-500 text-center">
-            Please enter a unique UTR number for your transaction.
-          </p>
-        </div>
-      </Modal>
+      {/* Receipt Modal */}
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        receiptData={receiptData}
+        onWhatsAppRedirect={handleWhatsAppRedirect}
+        paymentMethod="UPI"
+      />
+
+      {/* Duplicate Transaction Modal */}
+      <DuplicateTransactionModal
+        isOpen={isDuplicateModal}
+        onClose={() => setIsDuplicateModal(false)}
+        type="UTR"
+      />
     </>
   );
 }

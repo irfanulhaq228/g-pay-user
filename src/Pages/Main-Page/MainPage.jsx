@@ -26,6 +26,9 @@ import { FaExclamationCircle } from "react-icons/fa";
 import RefreshPage from "../Refresh-Page/RefreshPage";
 import cloudupload from "../../assets/cloudupload.svg";
 import AnimationTickmarck from "../../assets/AnimationTickmarck.gif";
+import ReceiptModal from "../../Components/ReceiptModal/ReceiptModal";
+import SuccessModal from "../../Components/SuccessModal/SuccessModal";
+import DuplicateTransactionModal from "../../Components/DuplicateTransactionModal/DuplicateTransactionModal";
 
 function MainPage({ setTransactionId }) {
 
@@ -61,6 +64,11 @@ function MainPage({ setTransactionId }) {
   const [successData, setSuccessData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedBank, setSelectedBank] = useState(null);
+
+  const [cryptoAmount, setCryptoAmount] = useState("");
+
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptData, setReceiptData] = useState({});
 
   const decrypt = (encryptedValue) => {
     try {
@@ -210,9 +218,7 @@ function MainPage({ setTransactionId }) {
       if (response?.status) {
         if (response?.data?.status === "ok") {
           setTransactionId(response?.data?.data?.trnNo);
-          // socket.emit("addLedger", { id: response?.data?.data?._id });
           if (type === "direct") {
-            // For direct payments, show modal and wait 2 seconds
             setSuccessData({
               transactionId: response?.data?.data?.trnNo,
               message: encodeURIComponent(
@@ -221,17 +227,22 @@ function MainPage({ setTransactionId }) {
               phone: localStorage.getItem("phone"),
             });
             setShowSuccessModal(true);
+            setReceiptData({
+              transactionId: response?.data?.data?.trnNo,
+              amount: originalAmount,
+              username: originalUsername,
+              site: site,
+              utr: utr,
+              bankName: selectedBank?.bankName,
+              accountNo: selectedBank?.accountNo,
+              ifsc: selectedBank?.iban,
+              date: new Date().toLocaleString()
+            });
             setTimeout(() => {
               setShowSuccessModal(false);
-              const whatsappUrl = `https://api.whatsapp.com/send?phone=${localStorage.getItem(
-                "phone"
-              )}&text=${encodeURIComponent(
-                `*New Payment Request Received*\n\n*Username:* ${originalUsername}\n*Transaction ID:* ${response?.data?.data?.trnNo}\n*Website:* ${site}\n*Amount:* ${originalAmount}\n*UTR:* ${utr}`
-              )}`;
-              window.location.href = whatsappUrl;
+              setShowReceiptModal(true);
             }, 2000);
           } else {
-            // For non-direct payments, redirect immediately without modal
             navigate("/payment-done", {
               state: {
                 transactionId: response?.data?.data?.trnNo,
@@ -270,7 +281,6 @@ function MainPage({ setTransactionId }) {
   };
 
   const isValidNumber = (value) => /^\d+(\.\d+)?$/.test(value);
-
   const [copyIban, setCopyIban] = useState(false);
   const [copyAccount, setCopyAccount] = useState(false);
   const [copyBankName, setCopyBankName] = useState(false);
@@ -311,6 +321,17 @@ function MainPage({ setTransactionId }) {
     if (label === "copyWallet") {
       navigator.clipboard.writeText(text).then(() => setCopyWallet(true));
     }
+  };
+
+  const handleCryptoAmountChange = (amount) => {
+    setCryptoAmount(amount);
+  };
+
+  const handleWhatsAppRedirect = () => {
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${localStorage.getItem("phone")}&text=${encodeURIComponent(
+      `*New Payment Request Received*\n\n*Username:* ${originalUsername}\n*Transaction ID:* ${receiptData.transactionId}\n*Website:* ${site}\n*Amount:* ${originalAmount}\n*UTR:* ${utr}`
+    )}`;
+    window.location.href = whatsappUrl;
   };
 
   const renderSidebar = () => {
@@ -390,15 +411,16 @@ function MainPage({ setTransactionId }) {
         <CryptoMethod
           setTransactionId={setTransactionId}
           bank={selectedBank}
-          amount={originalAmount}
+          amount={cryptoAmount}
           tax={webInfo?.tax || 0}
           type={type}
           site={site}
-          total={(
-            (originalAmount / 100) * (webInfo?.tax || 0) +
-            parseFloat(originalAmount)
-          ).toFixed(1)}
+          total={cryptoAmount ? (
+            (parseFloat(cryptoAmount) / 100) * (webInfo?.tax || 0) +
+            parseFloat(cryptoAmount)
+          ).toFixed(1) : ""}
           username={originalUsername}
+          onAmountChange={handleCryptoAmountChange}
         />
       );
     } else {
@@ -664,76 +686,36 @@ function MainPage({ setTransactionId }) {
           {/* Right Section (30%) - Order Summary */}
           <div className="w-full lg:w-[30%] bg-white text-gray-400 sm:px-6 lg:pr-0 lg:ps-6 lg:border-l-2 border-l-2-[--secondary]">
             <OrderSummary
-              amount={parseFloat(originalAmount)}
-              tax={parseFloat(originalTax)}
-              subtotal={parseFloat(originalTotal)}
+              amount={selectedMethod === "Crypto" ? parseFloat(cryptoAmount || 0) : parseFloat(originalAmount)}
+              tax={selectedMethod === "Crypto" ? (cryptoAmount ? parseFloat(webInfo?.tax || 0) : 0) : parseFloat(originalTax)}
+              subtotal={selectedMethod === "Crypto" ? (cryptoAmount ? parseFloat(cryptoAmount) : 0) : parseFloat(originalTotal)}
               webInfo={webInfo}
+              paymentMethod={selectedMethod}
             />
           </div>
         </main>
       </div>
 
-      <Modal
-        title="Duplicate Transaction"
-        open={isDuplicateModal}
-        onOk={() => setIsDuplicateModal(false)}
-        onCancel={() => setIsDuplicateModal(false)}
-        centered
-      >
-        <div className="py-4 flex flex-col items-center">
-          {/* Cancel Animation */}
-          <div className="flex justify-center mb-6">
-            <div className="bg-red-500 rounded-full p-2">
-              <img
-                src={cancel}
-                alt="Cancel Icon"
-                className="w-24 sm:w-28 h-24 sm:h-28 object-contain"
-              />
-            </div>
-          </div>
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        transactionId={successData.transactionId}
+      />
 
-          {/* Error Message */}
-          <p className="text-xl font-bold text-gray-800 mb-4">
-            OOPS! Duplicate UTR
-          </p>
-          <p className="text-red-500 font-medium text-center">
-            This UTR number has already been used!
-          </p>
-          <p className="mt-2 text-gray-500 text-center">
-            Please enter a unique UTR number for your transaction.
-          </p>
-        </div>
-      </Modal>
+      {/* Receipt Modal */}
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        receiptData={receiptData}
+        onWhatsAppRedirect={handleWhatsAppRedirect}
+        paymentMethod="Bank"
+      />
 
-      <Modal
-        title="Payment Successful"
-        open={showSuccessModal}
-        footer={null}
-        closable={false}
-        maskClosable={false}
-        centered
-      >
-        <div className="py-4 flex flex-col items-center">
-          <div className="flex justify-center mb-4">
-            <img
-              src={AnimationTickmarck}
-              alt="Success"
-              className="w-24 h-24 object-contain"
-            />
-          </div>
-          <h2 className="text-xl font-bold text-green-600 mb-2">
-            Payment Submitted Successfully!
-          </h2>
-          <p className="text-gray-600 mb-2">
-            Transaction ID: {successData.transactionId}
-          </p>
-          <p className="text-gray-500 text-center">
-            {type === "direct"
-              ? "Redirecting to WhatsApp..."
-              : "Redirecting..."}
-          </p>
-        </div>
-      </Modal>
+      {/* Duplicate Transaction Modal */}
+      <DuplicateTransactionModal
+        isOpen={isDuplicateModal}
+        onClose={() => setIsDuplicateModal(false)}
+        type="UTR"
+      />
     </Layout>
   );
 }

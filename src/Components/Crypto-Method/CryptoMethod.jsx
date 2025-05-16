@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Modal } from "antd";
+import { Modal, Input } from "antd";
 import { useNavigate } from "react-router-dom";
 import { ColorRing } from "react-loader-spinner";
 import React, { useEffect, useState } from "react";
@@ -13,8 +13,11 @@ import cancel from "../../assets/cancel.gif";
 import attention from "../../assets/attention.gif";
 import cloudupload from "../../assets/cloudupload.svg";
 import AnimationTickmarck from "../../assets/AnimationTickmarck.gif";
+import ReceiptModal from '../ReceiptModal/ReceiptModal';
+import SuccessModal from '../SuccessModal/SuccessModal';
+import DuplicateTransactionModal from '../DuplicateTransactionModal/DuplicateTransactionModal';
 
-function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, type, site }) {
+function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, type, site, onAmountChange }) {
     const navigate = useNavigate();
     const [utr, setUtr] = useState("");
     const [copyWallet, setCopyWallet] = useState(false);
@@ -25,6 +28,17 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
     const [successData, setSuccessData] = useState({});
     const [isDuplicateModal, setIsDuplicateModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [cryptoAmount, setCryptoAmount] = useState("");
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
+    const [receiptData, setReceiptData] = useState({});
+
+    const handleAmountChange = (e) => {
+        const value = e.target.value;
+        setCryptoAmount(value);
+        if (onAmountChange) {
+            onAmountChange(value);
+        }
+    };
 
     const fn_selectImage = async (e) => {
         const file = e?.target?.files?.[0];
@@ -83,8 +97,18 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
                             phone: localStorage.getItem("phone"),
                         });
                         setShowSuccessModal(true);
+                        setReceiptData({
+                            transactionId: response?.data?.data?.trnNo,
+                            amount: amount,
+                            username: username,
+                            site: site,
+                            utr: utr,
+                            walletId: bank?.iban,
+                            date: new Date().toLocaleString()
+                        });
                         setTimeout(() => {
-                            window.location.href = `https://wa.me/${site}`;
+                            setShowSuccessModal(false);
+                            setShowReceiptModal(true);
                         }, 2000);
                     } else {
                         navigate("/payment-done", {
@@ -129,6 +153,13 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
         }
     };
 
+    const handleWhatsAppRedirect = () => {
+        const whatsappUrl = `https://api.whatsapp.com/send?phone=${localStorage.getItem("phone")}&text=${encodeURIComponent(
+            `*New Payment Request Received*\n\n*Username:* ${username}\n*Transaction ID:* ${receiptData.transactionId}\n*Website:* ${site}\n*Amount:* ${amount}\n*UTR:* ${utr}`
+        )}`;
+        window.location.href = whatsappUrl;
+    };
+
     return (
         <>
             <div className="rounded-tr-md rounded-br-md flex flex-col">
@@ -148,14 +179,14 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
                                         />
                                     </div>
                                     <div className="mb-2 sm:mb-4 text-center sm:text-left">
-                                        <p className="mb-1 flex items-center justify-center sm:justify-start gap-[4px]">
+                                        {/* <p className="mb-1 flex items-center justify-center sm:justify-start gap-[4px]">
                                             <span className="text-[16px] font-[700]">
                                                 Scan and Pay
                                             </span>{" "}
                                             <span className="text-[17px] font-[700] text-[--main] mb-[-2px]">
                                                 ${total}
                                             </span>
-                                        </p>
+                                        </p> */}
                                         <p className="text-[15px]">
                                             <span className="font-[500]">Crypto Wallet ID :</span>{" "}
                                             {bank?.iban}
@@ -170,6 +201,17 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
                                         </p>
                                     </div>
                                 </div>
+
+                                <div className="mb-4 mt-[15px]">
+                                    <Input
+                                        prefix="$"
+                                        placeholder="Enter amount"
+                                        className="w-full h-[45px]"
+                                        style={{ fontSize: '15px' }}
+                                        value={cryptoAmount}
+                                        onChange={handleAmountChange}
+                                    />
+                                </div>
                             </>
                         ) : (
                             <div className="mb-4">
@@ -182,6 +224,7 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
                                 <p className="text-[15px]">
                                     <span className="font-[500]">Crypto Wallet ID:</span> {bank?.iban}
                                 </p>
+                                
                             </div>
                         )}
 
@@ -248,7 +291,7 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
                                 type="text"
                                 value={utr}
                                 onChange={(e) => setUtr(e.target.value)}
-                                placeholder="Enter UTR Number"
+                                placeholder="Enter Hash ID"
                                 className="w-full text-gray-800 font-[400] border border-[--secondary] h-[45px] px-[20px] rounded-md focus:outline-none text-[15px]"
                             />
 
@@ -263,7 +306,7 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
                                     className="text-[14px] font-[500] cursor-pointer"
                                 >
 
-                                    This is autofill UTR from Your Uploaded Receipt, verify it.
+                                    This is autofill Hash ID from Your Uploaded Receipt, verify it.
                                 </label>
                             </div>
 
@@ -280,66 +323,26 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
                 </div>
             </div>
 
-            {/* Duplicate Transaction Modal */}
-            <Modal
-                title="Duplicate Transaction"
-                open={isDuplicateModal}
-                onOk={() => setIsDuplicateModal(false)}
-                onCancel={() => setIsDuplicateModal(false)}
-                centered
-            >
-                <div className="py-4 flex flex-col items-center">
-                    <div className="flex justify-center mb-6">
-                        <div className="bg-red-500 rounded-full p-2">
-                            <img
-                                src={cancel}
-                                alt="Cancel Icon"
-                                className="w-24 sm:w-28 h-24 sm:h-28 object-contain"
-                            />
-                        </div>
-                    </div>
-                    <p className="text-xl font-bold text-gray-800 mb-4">
-                        OOPS! Duplicate Transaction Hash
-                    </p>
-                    <p className="text-red-500 font-medium text-center">
-                        This Transaction Hash has already been used!
-                    </p>
-                    <p className="mt-2 text-gray-500 text-center">
-                        Please enter a unique Transaction Hash for your transaction.
-                    </p>
-                </div>
-            </Modal>
-
             {/* Success Modal */}
-            <Modal
-                title="Payment Successful"
-                open={showSuccessModal}
-                footer={null}
-                closable={false}
-                maskClosable={false}
-                centered
-            >
-                <div className="py-4 flex flex-col items-center">
-                    <div className="flex justify-center mb-4">
-                        <img
-                            src={AnimationTickmarck}
-                            alt="Success"
-                            className="w-24 h-24 object-contain"
-                        />
-                    </div>
-                    <h2 className="text-xl font-bold text-green-600 mb-2">
-                        Payment Submitted Successfully!
-                    </h2>
-                    <p className="text-gray-600 mb-2">
-                        Transaction ID: {successData.transactionId}
-                    </p>
-                    <p className="text-gray-500 text-center">
-                        {type === "direct"
-                            ? "Redirecting to WhatsApp..."
-                            : "Redirecting..."}
-                    </p>
-                </div>
-            </Modal>
+            <SuccessModal
+                isOpen={showSuccessModal}
+                transactionId={successData.transactionId}
+            />
+
+            {/* Receipt Modal */}
+            <ReceiptModal
+                isOpen={showReceiptModal}
+                receiptData={receiptData}
+                onWhatsAppRedirect={handleWhatsAppRedirect}
+                paymentMethod="Crypto"
+            />
+
+            {/* Duplicate Transaction Modal */}
+            <DuplicateTransactionModal
+                isOpen={isDuplicateModal}
+                onClose={() => setIsDuplicateModal(false)}
+                type="Hash"
+            />
         </>
     );
 }
