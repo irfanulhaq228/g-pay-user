@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// export let BACKEND_URL = "https://backend.gpay.one";
-export const BACKEND_URL = "http://46.202.166.64:8015";
+export let BACKEND_URL = "https://backend.gpay.one";
+// export const BACKEND_URL = "http://46.202.166.64:8015";
 
 
 
@@ -56,6 +56,24 @@ export const fn_getWebInfoApi = async () => {
         }
     } catch (error) {
         console.log("fn_getBanksByTabApi ", error);
+        if (error?.status === 400) {
+            return { status: false, message: error?.response?.data?.message || "Something went wrong" }
+        }
+        return { status: false, message: "Network error" };
+    }
+}
+
+export const fn_sendFeedbackApi = async (data) => {
+    try {
+        const response = await axios.post(`${BACKEND_URL}/admin/feedback`, data);
+        console.log("response", response);
+        if (response?.status === 200) {
+            if (response?.data?.status === "ok") {
+                return { status: true, data: response?.data?.data }
+            }
+        }
+    } catch (error) {
+        console.log("fn_sendFeedbackApi ", error);
         if (error?.status === 400) {
             return { status: false, message: error?.response?.data?.message || "Something went wrong" }
         }

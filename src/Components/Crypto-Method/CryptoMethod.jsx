@@ -155,7 +155,7 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
 
     const handleWhatsAppRedirect = () => {
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${localStorage.getItem("phone")}&text=${encodeURIComponent(
-            `*New Payment Request Received*\n\n*Username:* ${username}\n*Transaction ID:* ${receiptData.transactionId}\n*Website:* ${site}\n*Amount:* ${amount}\n*UTR:* ${utr}`
+            `*New Payment Request Received*\n\n*Username:* ${username}\n*Transaction ID:* ${receiptData.transactionId}\n*Website:* ${site}\n*Amount:* $${amount}\n*Hash ID:* ${utr}`
         )}`;
         window.location.href = whatsappUrl;
     };
@@ -205,6 +205,8 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
                                 <div className="mb-4 mt-[15px]">
                                     <Input
                                         prefix="$"
+                                        type="number"
+                                        step={0.01}
                                         placeholder="Enter amount"
                                         className="w-full h-[45px]"
                                         style={{ fontSize: '15px' }}

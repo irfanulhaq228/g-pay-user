@@ -328,9 +328,16 @@ function MainPage({ setTransactionId }) {
   };
 
   const handleWhatsAppRedirect = () => {
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${localStorage.getItem("phone")}&text=${encodeURIComponent(
-      `*New Payment Request Received*\n\n*Username:* ${originalUsername}\n*Transaction ID:* ${receiptData.transactionId}\n*Website:* ${site}\n*Amount:* ${originalAmount}\n*UTR:* ${utr}`
-    )}`;
+    let whatsappUrl = "";
+    if (selectedMethod === "Crypto") {
+      whatsappUrl = `https://api.whatsapp.com/send?phone=${localStorage.getItem("phone")}&text=${encodeURIComponent(
+        `*New Payment Request Received*\n\n*Username:* ${originalUsername}\n*Transaction ID:* ${receiptData.transactionId}\n*Website:* ${site}\n*Amount:* ${originalAmount}\n*Hash ID:* ${utr}`
+      )}`;
+    } else {
+      whatsappUrl = `https://api.whatsapp.com/send?phone=${localStorage.getItem("phone")}&text=${encodeURIComponent(
+        `*New Payment Request Received*\n\n*Username:* ${originalUsername}\n*Transaction ID:* ${receiptData.transactionId}\n*Website:* ${site}\n*Amount:* ${originalAmount}\n*UTR:* ${utr}`
+      )}`;
+    }
     window.location.href = whatsappUrl;
   };
 
@@ -379,9 +386,9 @@ function MainPage({ setTransactionId }) {
             /> */}
             {/* <p className="font-bold text-[19px]">{item?.cryptoName}</p> */}
             <p className="font-bold text-[19px]">Crypto
-             <span className="text-[13px] font-[500] ml-2 mt-[1px]">
-             ({item?.iban?.slice(0, 5)}...{item?.iban?.slice(-5)})
-            </span>
+              <span className="text-[13px] font-[500] ml-2 mt-[1px]">
+                ({item?.iban?.slice(0, 5)}...{item?.iban?.slice(-5)})
+              </span>
             </p>
           </div>
         ));
