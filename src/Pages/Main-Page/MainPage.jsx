@@ -20,7 +20,7 @@ import cancel from "../../assets/cancel.gif";
 import { FaRegCopy } from "react-icons/fa6";
 import upilogo from "../../assets/upilogo.png";
 import banklogo from "../../assets/banklogo.svg";
-import crypto from "../../assets/crypto.png"
+import usdt from "../../assets/usdt.png"
 import attention from "../../assets/attention.gif";
 import { FaExclamationCircle } from "react-icons/fa";
 import RefreshPage from "../Refresh-Page/RefreshPage";
@@ -653,7 +653,7 @@ function MainPage({ setTransactionId }) {
                   } flex items-center justify-center cursor-pointer h-18 sm:h-28 lg:h-48 rounded-none lg:rounded-r-[10px]`}
               >
                 <img
-                  src={crypto}
+                  src={usdt}
                   alt="Crypto Transfer Logo"
                   className="w-6 h-6 sm:w-12 sm:h-12 lg:w-24 lg:h-24 object-contain"
                 />
