@@ -16,7 +16,9 @@ const Footer = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
   const [name, setName] = useState(""); // State for name input
   const [message, setMessage] = useState(""); // State for message input
-  const [errors, setErrors] = useState({ name: "", message: "" }); // Updated state for validation errors
+  const [phone, setPhone] = useState(""); // State for phone input
+  const [email, setEmail] = useState(""); // State for email input
+  const [errors, setErrors] = useState({ name: "", message: "", phone: "" }); // Updated state for validation errors
   const path = useLocation();
 
   const [loading, setLoading] = useState(false);
@@ -37,12 +39,14 @@ const Footer = () => {
     setIsModalOpen(false);
     setName(""); // Reset name
     setMessage(""); // Reset message
-    setErrors({ name: "", message: "" }); // Reset errors
+    setPhone(""); // Reset phone
+    setEmail(""); // Reset email
+    setErrors({ name: "", message: "", phone: "" }); // Reset errors
   };
 
   const validateInputs = () => {
     let isValid = true;
-    const newErrors = { name: "", message: "" };
+    const newErrors = { name: "", message: "", phone: "" };
 
     if (!name.trim()) {
       newErrors.name = "Name is required.";
@@ -54,6 +58,11 @@ const Footer = () => {
       isValid = false;
     }
 
+    if (!phone.trim()) {
+      newErrors.phone = "Phone number is required.";
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -61,7 +70,12 @@ const Footer = () => {
   const handleSubmit = async () => {
     if (validateInputs()) {
       setLoading(true);
-      const response = await fn_sendFeedbackApi({ feedbackMessage: message, feedbackSender: name });
+      const response = await fn_sendFeedbackApi({
+        feedbackMessage: message,
+        feedbackSender: name,
+        userPhoneNumber: phone,
+        userEmail: email || "",
+      });
       setResponse(response);
       if (response?.status) {
         setLoading(false);
@@ -69,12 +83,14 @@ const Footer = () => {
           setIsModalOpen(false);
           setName("");
           setMessage("");
-          setErrors({ name: "", message: "" });
+          setPhone("");
+          setEmail("");
+          setErrors({ name: "", message: "", phone: "" });
           setResponse(null);
         }, 5000);
       } else {
         setLoading(false);
-        setErrors({ name: "", message: "" });
+        setErrors({ name: "", message: "", phone: "" });
         alert(response?.message || "Something went wrong");
       }
     }
@@ -147,6 +163,19 @@ const Footer = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               style={{ borderColor: errors.name ? "red" : "#d9d9d9" }}
+            />
+            <Input
+              required
+              placeholder="Enter your phone number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              style={{ borderColor: errors.phone ? "red" : "#d9d9d9" }}
+            />
+            <Input
+              placeholder="Enter your email (optional)"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ borderColor: "#d9d9d9" }}
             />
             <Input.TextArea
               required
