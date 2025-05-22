@@ -65,6 +65,9 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
         if (!selectedImage) return alert("Upload Transaction Slip");
         if (utr === "") return alert("Enter UTR Number.");
         if (!checkBox) return alert("Verify the Uploaded Receipt Checkbox");
+        if(total <= 0){
+            return alert("Enter valid amount");
+        }
 
         setIsSubmitting(true);
         try {
@@ -206,6 +209,7 @@ function CryptoMethod({ setTransactionId, bank, amount, tax, total, username, ty
                                     <Input
                                         prefix="$"
                                         type="number"
+                                        min={1}
                                         step={0.01}
                                         placeholder="Enter amount"
                                         className="w-full h-[45px]"

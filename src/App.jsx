@@ -1,6 +1,5 @@
 import "./app.css";
-import axios from "axios";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import MainPage from "./Pages/Main-Page/MainPage";
 import PaymentDone from "./Pages/Payment-Done/PaymentDone";

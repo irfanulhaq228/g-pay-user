@@ -55,6 +55,9 @@ const Information = ({ savedUsername, savedSite, savedAmount }) => {
 
   const fn_submit = (e) => {
     e.preventDefault();
+    if(Number(amount) <= 0){
+      return alert("Invalid Amount")
+    }
     savedUsername(username);
     savedSite(website);
     savedAmount(amount);
@@ -137,6 +140,7 @@ const Information = ({ savedUsername, savedSite, savedAmount }) => {
             <input
               required
               step={0.01}
+              min={1}
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
